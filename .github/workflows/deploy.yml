@@ -105,7 +105,7 @@ jobs:
             php8.4 artisan optimize:clear
             php8.4 artisan optimize
             chown -R www-data:www-data /var/www/html/o4u/src
-            cp -f /var/www/html/o4u/deploy/supervisor/o4u-queue-worker.conf /etc/supervisor/conf.d/o4u-queue-worker.conf
+            cp -f /var/www/html/o4u/src/deploy/supervisor/o4u-queue-worker.conf /etc/supervisor/conf.d/o4u-queue-worker.conf
             supervisorctl reread
             supervisorctl update
             supervisorctl restart "o4u-queue-worker:*"
