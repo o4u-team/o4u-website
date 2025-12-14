@@ -9,7 +9,7 @@ jobs:
     steps:
       - uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.3'
+          php-version: '8.4'
       - uses: actions/checkout@v3
       - name: Copy .env
         run: |
@@ -101,8 +101,8 @@ jobs:
             cd /var/www/html/o4u/src
             rm -rf /var/www/html/o4u/src/storage/logs
             ln -s /var/www/html/o4u/logs/ /var/www/html/o4u/src/storage/
-            php8.3 artisan migrate --force
-            php8.3 artisan optimize:clear
-            php8.3 artisan optimize
+            php8.4 artisan migrate --force
+            php8.4 artisan optimize:clear
+            php8.4 artisan optimize
             chown -R www-data:www-data /var/www/html/o4u/src
             supervisorctl restart "o4u-worker:*"
