@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AppPermissionController;
+use App\Http\Controllers\Api\AppUsageLogController;
 use App\Http\Controllers\Api\DataCryptoController;
 use App\Http\Controllers\Api\FcmController;
 use App\Http\Controllers\Api\UserController;
@@ -9,6 +10,9 @@ use App\Http\Middleware\O4uAppMiddleware;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
+
+// Mobile app usage log (headers: X-App-Id, X-Client-System-Id)
+Route::post('app/usage/log', [AppUsageLogController::class, 'log']);
 
 Route::post('odoo-barcode/log', function(Request $request) {
     $data = $request->all();
