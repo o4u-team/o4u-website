@@ -2,10 +2,8 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Models\App;
 use App\Models\AppConnectionLog;
 use App\Models\AppUserDevice;
-use App\Models\ClientSystem;
 use App\Models\UserDevice;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
@@ -15,42 +13,18 @@ class AppUsageLogController extends Controller
 {
     /**
      * Log app usage from mobile app.
-     * Headers: X-App-Id (app uuid), X-Client-System-Id (client_system uuid)
+     * Requires ValidateClientSystemAppMiddleware (X-App-Id, X-Client-System-Id).
+     * $request->app and $request->client_system are set by middleware.
      */
     public function log(Request $request): JsonResponse
     {
-        $appId = $request->header('X-App-Id');
-        $clientSystemId = $request->header('X-Client-System-Id');
+        $app = $request->get('app');
+        $clientSystem = $request->get('client_system');
 
-        if (empty($appId) || empty($clientSystemId)) {
+        if (!$app || !$clientSystem) {
             return response()->json([
                 'success' => false,
-                'message' => 'Missing required headers: X-App-Id, X-Client-System-Id',
-            ], 400);
-        }
-
-        $app = App::where('uuid', $appId)->where('status', 'active')->first();
-        $clientSystem = ClientSystem::where('uuid', $clientSystemId)->where('status', 'active')->first();
-
-        if (!$app) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Invalid or inactive app.',
-            ], 404);
-        }
-
-        if (!$clientSystem) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Invalid or inactive client system.',
-            ], 404);
-        }
-
-        // Check app is allowed for this client system
-        if (!$clientSystem->apps()->where('apps.id', $app->id)->exists()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'App is not allowed for this client system.',
+                'message' => 'Invalid request. Apply ValidateClientSystemAppMiddleware.',
             ], 403);
         }
 

@@ -7,12 +7,10 @@ use App\Http\Controllers\Api\FcmController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Middleware\O4uApiKeyMiddleware;
 use App\Http\Middleware\O4uAppMiddleware;
+use App\Http\Middleware\ValidateClientSystemAppMiddleware;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
-
-// Mobile app usage log (headers: X-App-Id, X-Client-System-Id)
-Route::post('app/usage/log', [AppUsageLogController::class, 'log']);
 
 Route::post('odoo-barcode/log', function(Request $request) {
     $data = $request->all();
@@ -40,4 +38,13 @@ Route::middleware([
     Route::post('/data/encrypt', [DataCryptoController::class, 'encrypt']);
 
     Route::post('fcm/send', [FcmController::class, 'sendNoti']);
+});
+
+Route::middleware([
+    ValidateClientSystemAppMiddleware::class
+])->prefix('v1')->name('v1.')->group(function() {
+    // Firebase FCM
+    Route::post('fcm/send-multi', [FcmController::class, 'sendMultiNoti'])->name('fcm.send-multi');
+
+    Route::post('app-usage/log', [AppUsageLogController::class, 'log'])->name('app-usage.log');
 });
