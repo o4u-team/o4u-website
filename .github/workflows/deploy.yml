@@ -119,6 +119,8 @@ jobs:
             cd /var/www/html/o4u/src
             rm -rf /var/www/html/o4u/src/storage/logs
             ln -s /var/www/html/o4u/logs/ /var/www/html/o4u/src/storage/
+            rm -rf /var/www/html/o4u/src/storage/app
+            ln -s /var/www/html/o4u/app/ /var/www/html/o4u/src/storage/
             php8.4 artisan migrate --force
             php8.4 artisan optimize:clear
             php8.4 artisan optimize
