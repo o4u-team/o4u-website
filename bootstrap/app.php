@@ -14,6 +14,9 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->web(append: [HandleInertiaRequests::class]);
+
+        // Ensure API routes don't go through web middleware
+        $middleware->api(prepend: []);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //
