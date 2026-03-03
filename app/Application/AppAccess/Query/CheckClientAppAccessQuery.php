@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Application.AppAccess\Query;
+namespace App\Application\AppAccess\Query;
 
 final readonly class CheckClientAppAccessQuery
 {
