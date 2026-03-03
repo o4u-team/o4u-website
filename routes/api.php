@@ -28,6 +28,7 @@ Route::middleware([
     O4uAppMiddleware::class,
 ])->group(function() {
     Route::post('/app/permissions', [AppPermissionController::class, 'checkPermissions']);
+    Route::post('/app/check-access', [AppPermissionController::class, 'checkClientAppAccess']);
     Route::post('/data/decrypt', [DataCryptoController::class, 'decrypt']);
     Route::post('/user/device', [UserController::class, 'updateDeviceInfo']);
 });

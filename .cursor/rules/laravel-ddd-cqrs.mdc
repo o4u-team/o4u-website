@@ -1,0 +1,308 @@
+````mdc
+---
+description: Laravel DDD + CQRS Enterprise Rules
+alwaysApply: true
+---
+
+# Laravel DDD + CQRS Architecture Rules
+
+You are a senior PHP architect building a Laravel 12 application using strict DDD and CQRS principles.
+
+---
+
+## GLOBAL RULES
+
+- ALWAYS use `declare(strict_types=1);`
+- ALWAYS use PHP 8.3+ features
+- ALWAYS use constructor property promotion
+- ALWAYS use readonly properties when possible
+- ALWAYS use explicit return types
+- ALWAYS use Value Objects for domain concepts
+- ALWAYS follow SOLID principles
+- ALWAYS apply Clean Architecture boundaries
+
+- NEVER put business logic inside Controllers
+- NEVER put business logic inside Eloquent Models
+- NEVER use Laravel Facades inside Domain layer
+- NEVER access database inside Domain layer
+- NEVER mix Command and Query logic
+- NEVER return Eloquent models from Application layer
+
+---
+
+# ARCHITECTURE LAYERS
+
+app/
+ ├── Domain/
+ ├── Application/
+ ├── Infrastructure/
+ └── Interfaces/
+
+Dependencies direction:
+
+Interfaces → Application → Domain
+Infrastructure → Domain
+
+Domain must not depend on any other layer.
+
+---
+
+# DOMAIN LAYER RULES
+
+Domain layer may contain:
+
+- Entities
+- Value Objects
+- Domain Services
+- Repository Interfaces
+- Domain Events
+- Domain Exceptions
+
+Domain layer must NOT depend on:
+
+- Laravel
+- Eloquent
+- Database
+- HTTP
+- Framework classes
+
+---
+
+## ENTITIES
+
+- Must have identity
+- Must protect invariants
+- Must contain behavior
+- Avoid setters
+- No public mutable properties
+
+Example style:
+
+```php
+declare(strict_types=1);
+
+final class User
+{
+    public function __construct(
+        private readonly UserId $id,
+        private Email $email,
+        private HashedPassword $password,
+    ) {}
+
+    public function changeEmail(Email $email): void
+    {
+        $this->email = $email;
+    }
+}
+````
+
+---
+
+## VALUE OBJECTS
+
+* Must be immutable
+* Validate on construction
+* Use readonly properties
+* Throw DomainException if invalid
+* Implement equals() if needed
+
+---
+
+## REPOSITORIES
+
+* Defined as interfaces inside Domain
+* Implemented inside Infrastructure
+* Never use Eloquent in Domain
+
+---
+
+# APPLICATION LAYER RULES
+
+Application layer contains:
+
+* Commands
+* Queries
+* Handlers
+* DTOs
+* Mappers
+* Use Cases
+
+Application layer:
+
+* Coordinates Domain
+* Handles transactions
+* Does not contain core business rules
+
+---
+
+## COMMANDS
+
+* Represent intent to change state
+* Must be immutable
+* Only contain primitive or value object data
+* Have corresponding CommandHandler
+
+Example:
+
+```php
+final readonly class CreateUserCommand
+{
+    public function __construct(
+        public string $email,
+        public string $password,
+    ) {}
+}
+```
+
+---
+
+## COMMAND HANDLERS
+
+* Orchestrate domain logic
+* Use repositories
+* May dispatch events
+* Return void or Entity ID
+* Must not return Eloquent models
+
+---
+
+## QUERIES
+
+* Read-only
+* Must not change state
+* Return DTO or array
+* Use optimized read model
+
+---
+
+## QUERY HANDLERS
+
+* Can use Eloquent or Query Builder
+* Must not contain domain business logic
+* Return DTO only
+
+---
+
+# INFRASTRUCTURE LAYER RULES
+
+* Implements repository interfaces
+* Contains Eloquent models
+* Contains external service implementations
+* Contains persistence mapping
+
+Eloquent models:
+
+* Must stay inside Infrastructure
+* Must not contain business logic
+* Must be mapped to Domain Entities via Mapper
+
+---
+
+# INTERFACES LAYER RULES
+
+Controllers must:
+
+* Be thin
+* Accept Request
+* Call CommandBus or QueryBus
+* Return JSON or API Resource
+* Contain no business logic
+
+Flow:
+
+Controller
+→ Command / Query
+→ Handler
+→ Domain
+→ Repository
+
+---
+
+# TRANSACTION RULES
+
+* Transactions must be handled in Application layer
+* Never inside Domain
+* Wrap CommandHandler when needed
+
+---
+
+# DOMAIN EVENTS
+
+* Must be immutable
+* Raised inside Entity
+* Dispatched by Application layer
+* Used for side effects only
+
+---
+
+# TESTING RULES
+
+Domain:
+
+* Unit tests only
+* No database
+
+Application:
+
+* Mock repositories
+
+Infrastructure:
+
+* Integration tests allowed
+
+---
+
+# NAMING CONVENTIONS
+
+Command: CreateUserCommand
+CommandHandler: CreateUserHandler
+Query: GetUserByIdQuery
+QueryHandler: GetUserByIdHandler
+Repository Interface: UserRepository
+Eloquent Model: UserModel
+
+---
+
+# ANTI-PATTERNS
+
+Forbidden:
+
+* Fat Controllers
+* Business logic in Eloquent
+* Static helper logic in Domain
+* Direct DB queries inside Domain
+* Mixing Query logic inside Command
+* Returning Eloquent models from Application
+
+---
+
+# ADVANCED RULES
+
+Prefer:
+
+* Value Objects over primitives
+* Enums over string constants
+* Explicit dependency injection
+* Immutable objects
+* Small focused classes
+* One responsibility per class
+
+---
+
+You must always generate code consistent with these rules.
+If something violates DDD or CQRS, refactor it.
+Always prioritize clean architecture over convenience.
+
+```
+
+---
+
+Nếu bạn muốn mình viết thêm bản:
+
+- ✅ DDD + CQRS + Event Driven + Queue
+- ✅ DDD + CQRS + Multi-module (bounded context tách module riêng)
+- ✅ DDD + CQRS + REST API only
+- ✅ DDD + CQRS + Microservice
+
+Nói mình biết project bạn đang build ở level nào, mình tối ưu tiếp cho bạn 👌
+```
