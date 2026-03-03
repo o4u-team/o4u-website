@@ -17,18 +17,39 @@ class O4uAppMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
-    if (!$request->header('X-App-Key') && $request->header('X-App-Key') != config('o4u.mobile_app_key')) {
-            Log::info('=== MISSING APP HEADER ====', [
+        if (!$request->header('X-App-Id')) {
+            Log::info(__METHOD__, [
+                'message' => 'Missing app id',
                 'ip' => $request->ip(),
-                // IPs includes Proxy
-                'ips' => $request->ips(),
                 'header' => $request->header(),
             ]);
 
             return response()->json([
-            'message' => 'Forbiden',
+                'success' => false,
+                'message' => 'Forbiden',
             ], JsonResponse::HTTP_FORBIDDEN);
         }
+
+        $app = App::where('uuid', $request->header('X-App-Id'))->first();
+
+        if (!$app) {
+            Log::info(__METHOD__, [
+                'message' => 'Invalid app id',
+                'data' => $request->header('X-App-Id'),
+                'ip' => $request->ip(),
+                'header' => $request->header(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid credentials',
+            ], JsonResponse::HTTP_BAD_REQUEST);
+        }
+
+        $request->merge([
+            'app' => $app,
+        ]);
+
         return $next($request);
     }
 }
