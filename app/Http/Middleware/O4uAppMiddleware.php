@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\App;
 use Closure;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -30,7 +31,21 @@ class O4uAppMiddleware
             ], JsonResponse::HTTP_FORBIDDEN);
         }
 
-        $app = App::where('uuid', $request->header('X-App-Id'))->first();
+        try {
+            $app = App::where('uuid', $request->header('X-App-Id'))
+                ->where('status', 'active')
+                ->first();
+        } catch (\Throwable $e) {
+            Log::error(__METHOD__ . ': Middleware error', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Internal server error.',
+            ], JsonResponse::HTTP_BAD_REQUEST);
+        }
 
         if (!$app) {
             Log::info(__METHOD__, [
