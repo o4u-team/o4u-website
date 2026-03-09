@@ -8,6 +8,7 @@ use App\Application\AppAccess\DTO\CheckClientAppAccessResult;
 use App\Application\AppAccess\Handler\CheckClientAppAccessHandler;
 use App\Application\AppAccess\Query\CheckClientAppAccessQuery;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\CheckClientAppAccessRequest;
 use App\Models\App;
 use App\Models\ModuleApp;
 use Illuminate\Http\JsonResponse;
@@ -58,12 +59,9 @@ class AppPermissionController extends Controller
      *  - { "status": true, "client_system_uuid": "..." } if allowed
      *  - { "status": false } otherwise
      */
-    public function checkClientAppAccess(Request $request): JsonResponse
+    public function checkClientAppAccess(CheckClientAppAccessRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'client_domain' => 'required|string',
-            'db_name' => 'required|string',
-        ]);
+        $data = $request->validated();
 
         /** @var App|null $app */
         $app = $request->get('app');

@@ -20,6 +20,7 @@ You are a senior PHP architect building a Laravel 12 application using strict DD
 - ALWAYS use Value Objects for domain concepts
 - ALWAYS follow SOLID principles
 - ALWAYS apply Clean Architecture boundaries
+- ALWAYS create form request class for validations, seperate between web and api
 
 - NEVER put business logic inside Controllers
 - NEVER put business logic inside Eloquent Models
