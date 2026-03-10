@@ -92,15 +92,19 @@ class ClientSystemController extends Controller
                 'string',
                 'max:255',
                 'url:http,https',
-                Rule::unique('client_systems')->where(function ($query) use ($request) {
-                    return $query->where('db_name', $request->db_name);
-                }),
             ],
+            'webapp_endpoint' => [
+                'nullable',
+                'string',
+                'max:255',
+                'url:http,https',
+            ],
+            'allow_get_info' => 'boolean',
             'db_name' => 'required|string|max:255',
             'status' => 'required|in:active,inactive,expired',
         ], [
-            'endpoint.unique' => 'Cặp endpoint và db_name đã tồn tại.',
             'endpoint.url' => 'Endpoint phải là một URL hợp lệ (http hoặc https).',
+            'webapp_endpoint.url' => 'Webapp endpoint phải là một URL hợp lệ (http hoặc https).',
         ]);
 
         ClientSystem::create($validated);
@@ -135,15 +139,19 @@ class ClientSystemController extends Controller
                 'string',
                 'max:255',
                 'url:http,https',
-                Rule::unique('client_systems')->where(function ($query) use ($request) {
-                    return $query->where('db_name', $request->db_name);
-                })->ignore($clientSystem->id),
             ],
+            'webapp_endpoint' => [
+                'nullable',
+                'string',
+                'max:255',
+                'url:http,https',
+            ],
+            'allow_get_info' => 'boolean',
             'db_name' => 'required|string|max:255',
             'status' => 'required|in:active,inactive,expired',
         ], [
-            'endpoint.unique' => 'Cặp endpoint và db_name đã tồn tại.',
             'endpoint.url' => 'Endpoint phải là một URL hợp lệ (http hoặc https).',
+            'webapp_endpoint.url' => 'Webapp endpoint phải là một URL hợp lệ (http hoặc https).',
         ]);
 
         $clientSystem->update($validated);

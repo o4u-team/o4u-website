@@ -53,6 +53,15 @@
                             ></v-text-field>
 
                             <v-text-field
+                                v-model="form.webapp_endpoint"
+                                label="Webapp Endpoint"
+                                prepend-inner-icon="mdi-web"
+                                variant="outlined"
+                                :error-messages="errors.webapp_endpoint"
+                                placeholder="https://webapp.example.com"
+                            ></v-text-field>
+
+                            <v-text-field
                                 v-model="form.db_name"
                                 label="Database Name *"
                                 prepend-inner-icon="mdi-database"
@@ -71,6 +80,15 @@
                                 :error-messages="errors.status"
                                 required
                             ></v-select>
+
+                            <v-switch
+                                v-model="form.allow_get_info"
+                                label="Cho phép lấy thông tin qua API /api/app-info"
+                                color="primary"
+                                density="compact"
+                                hide-details
+                                class="mb-2"
+                            ></v-switch>
 
                             <v-alert
                                 v-if="isEdit && clientSystem?.uuid"
@@ -116,9 +134,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, reactive } from 'vue';
-import { router } from '@inertiajs/vue3';
 import DefaultLayout from '@/Layouts/DefaultLayout.vue';
+import { router } from '@inertiajs/vue3';
+import { computed, reactive, ref } from 'vue';
 
 interface Client {
     id: number;
@@ -131,8 +149,10 @@ interface ClientSystem {
     uuid: string;
     client_id: number;
     endpoint: string;
+    webapp_endpoint?: string | null;
     db_name: string;
     status: 'active' | 'inactive' | 'expired';
+    allow_get_info?: boolean;
 }
 
 interface Props {
@@ -155,16 +175,20 @@ const form = reactive({
     name: props.clientSystem?.name || '',
     client_id: props.clientSystem?.client_id || null as number | null,
     endpoint: props.clientSystem?.endpoint || '',
+    webapp_endpoint: props.clientSystem?.webapp_endpoint || '',
     db_name: props.clientSystem?.db_name || '',
     status: props.clientSystem?.status || 'active',
+    allow_get_info: props.clientSystem?.allow_get_info ?? false,
 });
 
 const errors = reactive<Record<string, string>>({
     name: '',
     client_id: '',
     endpoint: '',
+    webapp_endpoint: '',
     db_name: '',
     status: '',
+    allow_get_info: '',
 });
 
 const statusOptions = [
