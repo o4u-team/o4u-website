@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AppInfoController;
 use App\Http\Controllers\Api\AppPermissionController;
 use App\Http\Controllers\Api\AppUsageLogController;
 use App\Http\Controllers\Api\DataCryptoController;
@@ -32,6 +33,12 @@ Route::middleware([
     Route::post('/data/decrypt', [DataCryptoController::class, 'decrypt']);
     Route::post('/user/device', [UserController::class, 'updateDeviceInfo']);
 });
+
+// Trả về thông tin client_system (endpoint, webapp_endpoint, db_name)
+// cần headers: X-App-Id, X-Client-System-Id
+Route::middleware([
+    ValidateClientSystemAppMiddleware::class,
+])->get('/app-info', [AppInfoController::class, 'show']);
 
 Route::middleware([
     O4uApiKeyMiddleware::class

@@ -19,13 +19,16 @@ class ClientSystem extends Model
         'uuid',
         'client_id',
         'endpoint',
+        'webapp_endpoint',
         'db_name',
         'status',
+        'allow_get_info',
     ];
 
     protected $casts = [
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
+        'allow_get_info' => 'boolean',
     ];
 
     /**
