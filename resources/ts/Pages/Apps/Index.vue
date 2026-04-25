@@ -62,6 +62,22 @@
                 :loading="loading"
                 hide-default-footer
             >
+                <template v-slot:item.name="{ item }">
+                    <div class="d-flex align-center justify-space-between">
+                        <div class="d-flex align-center gap-2">
+                            <span>{{ item.name }}</span>
+                            <v-chip
+                                v-if="item.allow_public"
+                                size="x-small"
+                                color="primary"
+                                variant="tonal"
+                            >
+                                Public
+                            </v-chip>
+                        </div>
+                    </div>
+                </template>
+
                 <template v-slot:item.status="{ item }">
                     <v-chip
                         :color="getStatusColor(item.status)"
@@ -197,6 +213,7 @@ interface AppItem {
     android_store_url: string | null;
     apple_store_url: string | null;
     status: 'active' | 'maintenance' | 'inactive';
+    allow_public?: boolean;
     created_at: string;
 }
 

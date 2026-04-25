@@ -70,6 +70,7 @@ class AppController extends Controller
             'android_store_url' => 'nullable|url|max:500',
             'apple_store_url' => 'nullable|url|max:500',
             'status' => 'required|in:active,maintenance,inactive',
+            'allow_public' => 'sometimes|boolean',
         ], [
             'android_min_version.regex' => 'Android min version must be in semantic version format (e.g., 1.0.0)',
             'android_current_version.regex' => 'Android current version must be in semantic version format (e.g., 1.0.0)',
@@ -78,6 +79,8 @@ class AppController extends Controller
             'android_store_url.url' => 'Android store URL must be a valid URL',
             'apple_store_url.url' => 'Apple store URL must be a valid URL',
         ]);
+
+        $validated['allow_public'] = (bool) ($validated['allow_public'] ?? false);
 
         // Validate Android: min_version <= current_version
         if (!empty($validated['android_min_version']) && !empty($validated['android_current_version'])) {
@@ -127,6 +130,7 @@ class AppController extends Controller
             'android_store_url' => 'nullable|url|max:500',
             'apple_store_url' => 'nullable|url|max:500',
             'status' => 'required|in:active,maintenance,inactive',
+            'allow_public' => 'sometimes|boolean',
         ], [
             'android_min_version.regex' => 'Android min version must be in semantic version format (e.g., 1.0.0)',
             'android_current_version.regex' => 'Android current version must be in semantic version format (e.g., 1.0.0)',
@@ -135,6 +139,8 @@ class AppController extends Controller
             'android_store_url.url' => 'Android store URL must be a valid URL',
             'apple_store_url.url' => 'Apple store URL must be a valid URL',
         ]);
+
+        $validated['allow_public'] = (bool) ($validated['allow_public'] ?? false);
 
         // Validate Android: min_version <= current_version
         if (!empty($validated['android_min_version']) && !empty($validated['android_current_version'])) {

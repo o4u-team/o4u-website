@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Laravel\Socialite\Facades\Socialite;
+use Illuminate\Support\Facades\Log;
 
 class SocialiteController extends Controller
 {
@@ -15,6 +16,8 @@ class SocialiteController extends Controller
      */
     public function redirectToGoogle(): RedirectResponse
     {
+        Log::info('Redirecting to Google authentication page');
+        Log::info(Socialite::driver('google')->redirect()->getTargetUrl());
         return Socialite::driver('google')->redirect();
     }
 

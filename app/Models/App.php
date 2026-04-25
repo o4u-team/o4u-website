@@ -23,9 +23,11 @@ class App extends Model
         'android_store_url',
         'apple_store_url',
         'status',
+        'allow_public',
     ];
 
     protected $casts = [
+        'allow_public' => 'boolean',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];

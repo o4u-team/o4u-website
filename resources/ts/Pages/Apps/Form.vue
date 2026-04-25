@@ -157,6 +157,17 @@
                                     ></v-select>
                                 </v-col>
 
+                                <!-- Allow public -->
+                                <v-col cols="12" md="6">
+                                    <v-switch
+                                        v-model="form.allow_public"
+                                        color="primary"
+                                        inset
+                                        label="Cho phép public (bỏ qua check client system)"
+                                        :error-messages="errors.allow_public"
+                                    ></v-switch>
+                                </v-col>
+
                                 <!-- UUID (read-only when editing) -->
                                 <v-col v-if="isEdit && app?.uuid" cols="12">
                                     <v-alert
@@ -220,6 +231,7 @@ interface AppItem {
     android_store_url: string | null;
     apple_store_url: string | null;
     status: 'active' | 'maintenance' | 'inactive';
+    allow_public?: boolean;
 }
 
 interface Props {
@@ -245,6 +257,7 @@ const form = reactive({
     android_store_url: props.app?.android_store_url || '',
     apple_store_url: props.app?.apple_store_url || '',
     status: props.app?.status || 'active',
+    allow_public: props.app?.allow_public ?? false,
 });
 
 const errors = reactive<Record<string, string>>({
@@ -256,6 +269,7 @@ const errors = reactive<Record<string, string>>({
     android_store_url: '',
     apple_store_url: '',
     status: '',
+    allow_public: '',
 });
 
 const statusOptions = [

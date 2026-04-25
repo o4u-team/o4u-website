@@ -19,9 +19,12 @@ class CheckClientAppAccessRequest extends FormRequest
      */
     public function rules(): array
     {
+        $app = $this->get('app');
+        $isPublicApp = is_object($app) && property_exists($app, 'allow_public') && (bool) $app->allow_public;
+
         return [
-            'client_domain' => ['required', 'string'],
-            'db_name' => ['required', 'string'],
+            'client_domain' => [$isPublicApp ? 'nullable' : 'required', 'string'],
+            'db_name' => [$isPublicApp ? 'nullable' : 'required', 'string'],
         ];
     }
 }

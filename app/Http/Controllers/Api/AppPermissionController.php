@@ -71,6 +71,13 @@ class AppPermissionController extends Controller
             ]);
         }
 
+        if ($app->allow_public) {
+            return response()->json([
+                'status' => true,
+                'client_system_uuid' => null,
+            ]);
+        }
+
         $query = new CheckClientAppAccessQuery(
             appId: $app->id,
             clientDomain: $data['client_domain'],
