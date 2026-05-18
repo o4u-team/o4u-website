@@ -39,3 +39,4 @@ Route::middleware('auth')->group(function () {
 // Legacy route
 Route::view('/kho-barcode', 'kho_barcode');
 Route::view('/cong-dat-hang', 'cong_dat_hang_policy');
+Route::view('/hr-cham-cong', 'hr_cham_cong_policy');
