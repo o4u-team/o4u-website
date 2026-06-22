@@ -85,8 +85,5 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 
-# Web (default): nginx + php-fpm
+# Web + queue worker: nginx + php-fpm + queue:work (supervisord)
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
-
-# Queue worker (override in k3s Deployment):
-# CMD ["php", "artisan", "queue:work", "--sleep=3", "--tries=3", "--max-time=3600"]

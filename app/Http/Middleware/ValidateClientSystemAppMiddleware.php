@@ -25,6 +25,13 @@ class ValidateClientSystemAppMiddleware
             $appId = $request->header('X-App-Id');
 
             if (empty($clientSystemId) || empty($appId)) {
+                Log::warning(__METHOD__ . ': Missing client system/app headers', [
+                    'path' => $request->path(),
+                    'x_client_system_id' => $clientSystemId,
+                    'x_app_id' => $appId,
+                    'ip' => $request->ip(),
+                ]);
+
                 return response()->json([
                     'success' => false,
                     'message' => 'Missing required headers: X-Client-System-Id, X-App-Id',
@@ -36,6 +43,13 @@ class ValidateClientSystemAppMiddleware
                 ->first();
 
             if (!$clientSystem) {
+                Log::warning(__METHOD__ . ': Invalid or inactive client system', [
+                    'path' => $request->path(),
+                    'x_client_system_id' => $clientSystemId,
+                    'x_app_id' => $appId,
+                    'ip' => $request->ip(),
+                ]);
+
                 return response()->json([
                     'success' => false,
                     'message' => 'Invalid or inactive client system.',
@@ -48,6 +62,13 @@ class ValidateClientSystemAppMiddleware
                 : App::where('uuid', $appId)->where('status', 'active')->first();
 
             if (!$app) {
+                Log::warning(__METHOD__ . ': Invalid or inactive app', [
+                    'path' => $request->path(),
+                    'x_client_system_id' => $clientSystemId,
+                    'x_app_id' => $appId,
+                    'ip' => $request->ip(),
+                ]);
+
                 return response()->json([
                     'success' => false,
                     'message' => 'Invalid or inactive app.',
@@ -55,9 +76,21 @@ class ValidateClientSystemAppMiddleware
             }
 
             if (!$clientSystem->apps()->where('apps.id', $app->id)->exists()) {
+                Log::warning(__METHOD__ . ': App not linked to client system', [
+                    'path' => $request->path(),
+                    'client_system_id' => $clientSystem->id,
+                    'client_system_uuid' => $clientSystem->uuid,
+                    'app_id' => $app->id,
+                    'app_uuid' => $app->uuid,
+                    'x_client_system_id' => $clientSystemId,
+                    'x_app_id' => $appId,
+                    'ip' => $request->ip(),
+                ]);
+
                 return response()->json([
                     'success' => false,
                     'message' => 'App is not allowed for this client system.',
+                    'hint' => 'Link this app to the client system in O4U admin (Client Systems → Apps / sync-apps).',
                 ], 403);
             }
 
@@ -70,6 +103,7 @@ class ValidateClientSystemAppMiddleware
         } catch (\Throwable $e) {
             Log::error(__METHOD__ . ': Middleware error', [
                 'error' => $e->getMessage(),
+                'path' => $request->path(),
                 'trace' => $e->getTraceAsString(),
             ]);
 

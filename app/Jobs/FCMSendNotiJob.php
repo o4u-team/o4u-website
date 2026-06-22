@@ -23,14 +23,24 @@ class FCMSendNotiJob implements ShouldQueue
      */
     public function handle(Messaging $messaging): void
     {
-        Log::info(__METHOD__, [
-            'message' => '==== FCm JOB RUN====',
-        ]);
-        $message = CloudMessage::new()
-            ->withNotification(Notification::create($this->title, $this->description))
-            ->withData($this->data)
-            ->toToken($this->token);
+        try {
+            Log::info(__METHOD__, [
+                'message' => '==== FCm JOB RUN====',
+            ]);
+            $message = CloudMessage::new()
+                ->withNotification(Notification::create($this->title, $this->description))
+                ->withData($this->data)
+                ->toToken($this->token);
 
-        $messaging->send($message);
+            $messaging->send($message);
+        } catch (\Throwable $e) {
+            Log::error(__METHOD__ . ': FCM send failed', [
+                'title' => $this->title,
+                'token_prefix' => substr($this->token, 0, 12).'...',
+                'error' => $e->getMessage(),
+            ]);
+
+            throw $e;
+        }
     }
 }

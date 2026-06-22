@@ -36,24 +36,35 @@ class FCMSendMultiNotiJob implements ShouldQueue
             return;
         }
 
-        $message = CloudMessage::new()
-            ->withNotification(Notification::create($this->title, $this->description))
-            ->withData($this->data);
+        try {
+            $message = CloudMessage::new()
+                ->withNotification(Notification::create($this->title, $this->description))
+                ->withData($this->data);
 
-        $report = $messaging->sendMulticast($message, $this->tokens);
+            $report = $messaging->sendMulticast($message, $this->tokens);
 
-        Log::info(__METHOD__, [
-            'successes' => $report->successes()->count(),
-            'failures' => $report->failures()->count(),
-        ]);
+            Log::info(__METHOD__, [
+                'successes' => $report->successes()->count(),
+                'failures' => $report->failures()->count(),
+                'token_count' => count($this->tokens),
+            ]);
 
-        if ($report->hasFailures()) {
-            foreach ($report->failures()->getItems() as $failure) {
-                Log::warning(__METHOD__ . ': FCM multicast failure', [
-                    'token' => $failure->target()->value(),
-                    'error' => $failure->error()?->getMessage(),
-                ]);
+            if ($report->hasFailures()) {
+                foreach ($report->failures()->getItems() as $failure) {
+                    Log::warning(__METHOD__ . ': FCM multicast failure', [
+                        'token_prefix' => substr($failure->target()->value(), 0, 12).'...',
+                        'error' => $failure->error()?->getMessage(),
+                    ]);
+                }
             }
+        } catch (\Throwable $e) {
+            Log::error(__METHOD__ . ': FCM multicast failed', [
+                'title' => $this->title,
+                'token_count' => count($this->tokens),
+                'error' => $e->getMessage(),
+            ]);
+
+            throw $e;
         }
     }
 }
