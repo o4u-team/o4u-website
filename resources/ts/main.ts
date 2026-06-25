@@ -1,3 +1,4 @@
+import '../css/app.css';
 import { createInertiaApp } from '@inertiajs/vue3';
 import { createApp, DefineComponent, h } from 'vue';
 import vuetify from './plugins/vuetify';

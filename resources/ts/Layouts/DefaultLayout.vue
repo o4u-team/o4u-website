@@ -1,7 +1,7 @@
 <template>
     <v-app>
         <v-app-bar color="primary" prominent>
-            <v-app-bar-title style="cursor: pointer" @click="router.visit('/')">
+            <v-app-bar-title style="cursor: pointer" @click="router.visit('/dashboard')">
                 O4U Dashboard
             </v-app-bar-title>
 

@@ -42,7 +42,7 @@ class SocialiteController extends Controller
 
             Auth::login($user, true);
 
-            return redirect()->intended('/');
+            return redirect()->intended('/dashboard');
         } catch (\Exception $e) {
             return redirect('/login')->with('error', 'Unable to login with Google. Please try again.');
         }

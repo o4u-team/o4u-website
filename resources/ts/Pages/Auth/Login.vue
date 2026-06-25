@@ -74,7 +74,7 @@ const route = (name: string) => {
 <style scoped>
 .fill-height {
     min-height: 100vh;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #e8f5e9 0%, #2e7d32 100%);
 }
 
 .v-card {

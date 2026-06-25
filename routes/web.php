@@ -8,6 +8,8 @@ use App\Http\Controllers\Web\ClientSystemController;
 use Illuminate\Support\Facades\Route;
 
 // Public routes
+Route::inertia('/', 'Welcome')->name('welcome');
+
 Route::middleware('guest')->group(function () {
     Route::inertia('/login', 'Auth/Login')->name('login');
     Route::get('/auth/google', [SocialiteController::class, 'redirectToGoogle'])->name('auth.google');
@@ -16,7 +18,7 @@ Route::middleware('guest')->group(function () {
 
 // Protected routes
 Route::middleware('auth')->group(function () {
-    Route::inertia('/', 'Home')->name('home');
+    Route::inertia('/dashboard', 'Home')->name('home');
     Route::post('/logout', [SocialiteController::class, 'logout'])->name('logout');
 
     // Clients CRUD
