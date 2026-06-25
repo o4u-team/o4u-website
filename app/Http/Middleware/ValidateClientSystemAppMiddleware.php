@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Http\Support\ApiRequestHeaders;
 use App\Models\App;
 use App\Models\ClientSystem;
 use Closure;
@@ -21,8 +22,8 @@ class ValidateClientSystemAppMiddleware
     public function handle(Request $request, Closure $next): Response
     {
         try {
-            $clientSystemId = $request->header('X-Client-System-Id');
-            $appId = $request->header('X-App-Id');
+            $clientSystemId = ApiRequestHeaders::value($request, 'X-Client-System-Id');
+            $appId = ApiRequestHeaders::value($request, 'X-App-Id');
 
             if (empty($clientSystemId) || empty($appId)) {
                 Log::warning(__METHOD__ . ': Missing client system/app headers', [
@@ -38,7 +39,7 @@ class ValidateClientSystemAppMiddleware
                 ], 400);
             }
 
-            $clientSystem = ClientSystem::where('uuid', $clientSystemId)
+            $clientSystem = ClientSystem::where('uuid', ApiRequestHeaders::uuid($clientSystemId))
                 ->where('status', 'active')
                 ->first();
 
@@ -59,7 +60,7 @@ class ValidateClientSystemAppMiddleware
             // Accept app by uuid (preferred) or numeric id
             $app = is_numeric($appId)
                 ? App::where('id', (int) $appId)->where('status', 'active')->first()
-                : App::where('uuid', $appId)->where('status', 'active')->first();
+                : App::where('uuid', ApiRequestHeaders::uuid($appId))->where('status', 'active')->first();
 
             if (!$app) {
                 Log::warning(__METHOD__ . ': Invalid or inactive app', [

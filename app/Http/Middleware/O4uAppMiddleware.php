@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Http\Support\ApiRequestHeaders;
 use App\Models\App;
 use Closure;
 use Illuminate\Http\JsonResponse;
@@ -18,7 +19,9 @@ class O4uAppMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (!$request->header('X-App-Id')) {
+        $appId = ApiRequestHeaders::value($request, 'X-App-Id');
+
+        if ($appId === null) {
             Log::info(__METHOD__, [
                 'message' => 'Missing app id',
                 'ip' => $request->ip(),
@@ -31,26 +34,29 @@ class O4uAppMiddleware
             ], JsonResponse::HTTP_FORBIDDEN);
         }
 
-        try {
-            $app = App::where('uuid', $request->header('X-App-Id'))
-                ->where('status', 'active')
-                ->first();
-        } catch (\Throwable $e) {
-            Log::error(__METHOD__ . ': Middleware error', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
+        $appUuid = ApiRequestHeaders::uuid($appId);
+
+        if ($appUuid === null) {
+            Log::info(__METHOD__, [
+                'message' => 'Invalid app id format',
+                'data' => $appId,
+                'ip' => $request->ip(),
             ]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Internal server error.',
+                'message' => 'Invalid credentials',
             ], JsonResponse::HTTP_BAD_REQUEST);
         }
+
+        $app = App::where('uuid', $appUuid)
+            ->where('status', 'active')
+            ->first();
 
         if (!$app) {
             Log::info(__METHOD__, [
                 'message' => 'Invalid app id',
-                'data' => $request->header('X-App-Id'),
+                'data' => $appUuid,
                 'ip' => $request->ip(),
                 'header' => $request->header(),
             ]);

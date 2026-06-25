@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AppInfoController;
 use App\Http\Controllers\Api\AppPermissionController;
 use App\Http\Controllers\Api\AppUsageLogController;
+use App\Http\Controllers\Api\AppVersionController;
 use App\Http\Controllers\Api\DataCryptoController;
 use App\Http\Controllers\Api\FcmController;
 use App\Http\Controllers\Api\UserController;
@@ -28,6 +29,7 @@ Route::post('odoo-approval/log', function (Request $request) {
 Route::middleware([
     O4uAppMiddleware::class,
 ])->group(function() {
+    Route::get('/app/version', [AppVersionController::class, 'show'])->name('app.version');
     Route::post('/app/permissions', [AppPermissionController::class, 'checkPermissions']);
     Route::post('/app/check-access', [AppPermissionController::class, 'checkClientAppAccess']);
     Route::post('/data/decrypt', [DataCryptoController::class, 'decrypt']);
