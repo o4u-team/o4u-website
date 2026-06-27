@@ -18,6 +18,7 @@ class AppVersionApiTest extends TestCase
             'android_min_version' => '1.2.0',
             'android_current_version' => '1.3.0',
             'android_store_url' => 'https://play.google.com/store/apps/details?id=test',
+            'webapp_url' => 'https://webapp.example.com',
             'status' => 'active',
         ]);
 
@@ -34,6 +35,7 @@ class AppVersionApiTest extends TestCase
                     'min_version' => '1.2.0',
                     'current_version' => '1.3.0',
                     'store_url' => 'https://play.google.com/store/apps/details?id=test',
+                    'webapp_url' => 'https://webapp.example.com',
                     'force_update' => true,
                 ],
             ]);

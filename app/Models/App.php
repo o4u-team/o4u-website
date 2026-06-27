@@ -22,6 +22,7 @@ class App extends Model
         'ios_current_version',
         'android_store_url',
         'apple_store_url',
+        'webapp_url',
         'status',
         'allow_public',
     ];

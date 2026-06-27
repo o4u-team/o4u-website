@@ -43,13 +43,17 @@ class AppVersionController extends Controller
 
             return response()->json([
                 'success' => true,
-                'data' => $this->buildPlatformVersionData($app, $platform, $clientVersion),
+                'data' => array_merge(
+                    $this->buildPlatformVersionData($app, $platform, $clientVersion),
+                    ['webapp_url' => $app->webapp_url],
+                ),
             ]);
         }
 
         return response()->json([
             'success' => true,
             'data' => [
+                'webapp_url' => $app->webapp_url,
                 'android' => $this->buildPlatformVersionData($app, 'android', $clientVersion),
                 'ios' => $this->buildPlatformVersionData($app, 'ios', $clientVersion),
             ],

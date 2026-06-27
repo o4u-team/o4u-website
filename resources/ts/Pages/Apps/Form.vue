@@ -144,6 +144,18 @@
                                     ></v-text-field>
                                 </v-col>
 
+                                <!-- Webapp URL -->
+                                <v-col cols="12">
+                                    <v-text-field
+                                        v-model="form.webapp_url"
+                                        label="Webapp URL"
+                                        prepend-inner-icon="mdi-web"
+                                        variant="outlined"
+                                        placeholder="https://..."
+                                        :error-messages="errors.webapp_url"
+                                    ></v-text-field>
+                                </v-col>
+
                                 <!-- Status -->
                                 <v-col cols="12" md="6">
                                     <v-select
@@ -230,6 +242,7 @@ interface AppItem {
     ios_current_version: string | null;
     android_store_url: string | null;
     apple_store_url: string | null;
+    webapp_url: string | null;
     status: 'active' | 'maintenance' | 'inactive';
     allow_public?: boolean;
 }
@@ -256,6 +269,7 @@ const form = reactive({
     ios_current_version: props.app?.ios_current_version || '',
     android_store_url: props.app?.android_store_url || '',
     apple_store_url: props.app?.apple_store_url || '',
+    webapp_url: props.app?.webapp_url || '',
     status: props.app?.status || 'active',
     allow_public: props.app?.allow_public ?? false,
 });
@@ -268,6 +282,7 @@ const errors = reactive<Record<string, string>>({
     ios_current_version: '',
     android_store_url: '',
     apple_store_url: '',
+    webapp_url: '',
     status: '',
     allow_public: '',
 });

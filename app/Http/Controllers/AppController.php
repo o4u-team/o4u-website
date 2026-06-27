@@ -69,6 +69,7 @@ class AppController extends Controller
             'ios_current_version' => 'nullable|string|regex:/^\d+\.\d+\.\d+$/',
             'android_store_url' => 'nullable|url|max:500',
             'apple_store_url' => 'nullable|url|max:500',
+            'webapp_url' => 'nullable|url|max:500',
             'status' => 'required|in:active,maintenance,inactive',
             'allow_public' => 'sometimes|boolean',
         ], [
@@ -78,6 +79,7 @@ class AppController extends Controller
             'ios_current_version.regex' => 'iOS current version must be in semantic version format (e.g., 1.0.0)',
             'android_store_url.url' => 'Android store URL must be a valid URL',
             'apple_store_url.url' => 'Apple store URL must be a valid URL',
+            'webapp_url.url' => 'Webapp URL must be a valid URL',
         ]);
 
         $validated['allow_public'] = (bool) ($validated['allow_public'] ?? false);
@@ -129,6 +131,7 @@ class AppController extends Controller
             'ios_current_version' => 'nullable|string|regex:/^\d+\.\d+\.\d+$/',
             'android_store_url' => 'nullable|url|max:500',
             'apple_store_url' => 'nullable|url|max:500',
+            'webapp_url' => 'nullable|url|max:500',
             'status' => 'required|in:active,maintenance,inactive',
             'allow_public' => 'sometimes|boolean',
         ], [
@@ -138,6 +141,7 @@ class AppController extends Controller
             'ios_current_version.regex' => 'iOS current version must be in semantic version format (e.g., 1.0.0)',
             'android_store_url.url' => 'Android store URL must be a valid URL',
             'apple_store_url.url' => 'Apple store URL must be a valid URL',
+            'webapp_url.url' => 'Webapp URL must be a valid URL',
         ]);
 
         $validated['allow_public'] = (bool) ($validated['allow_public'] ?? false);
