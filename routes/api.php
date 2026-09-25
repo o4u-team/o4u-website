@@ -26,6 +26,25 @@ Route::post('odoo-approval/log', function (Request $request) {
     Log::channel('odoo_approval')->info(json_encode($data));
 });
 
+// Remote debug dump from Sunmi V1s POS app (no ADB).
+Route::post('pos-v1s/log', function (Request $request) {
+    $meta = [
+        'app' => $request->input('app'),
+        'version' => $request->input('version'),
+        'versionCode' => $request->input('versionCode'),
+        'deviceModel' => $request->input('deviceModel'),
+        'androidSdk' => $request->input('androidSdk'),
+        'deviceId' => $request->input('deviceId'),
+        'uploadedAt' => $request->input('uploadedAt'),
+        'ip' => $request->ip(),
+    ];
+
+    Log::channel('pos_v1s')->info('=== POS V1s log upload === '.json_encode($meta));
+    Log::channel('pos_v1s')->info((string) $request->input('log', ''));
+
+    return response()->json(['ok' => true]);
+});
+
 Route::middleware([
     O4uAppMiddleware::class,
 ])->group(function() {
