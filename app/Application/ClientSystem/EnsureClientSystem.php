@@ -7,8 +7,10 @@ namespace App\Application\ClientSystem;
 use App\Models\App;
 use App\Models\Client;
 use App\Models\ClientSystem;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use RuntimeException;
 
 class EnsureClientSystem
 {
@@ -23,14 +25,16 @@ class EnsureClientSystem
         $endpoint = $this->normalizeEndpoint($endpoint);
         $dbName = trim($dbName);
 
-        return DB::transaction(function () use ($app, $endpoint, $dbName): array {
+        $appId = $this->savedId($app);
+
+        return DB::transaction(function () use ($appId, $endpoint, $dbName): array {
             $existing = $this->find($endpoint, $dbName);
             if ($existing instanceof ClientSystem) {
                 if ($existing->status !== 'active') {
                     $existing->status = 'active';
                     $existing->save();
                 }
-                $existing->apps()->syncWithoutDetaching([$app->id]);
+                $this->grant($existing, $appId);
 
                 return [
                     'client_system_id' => (string) $existing->uuid,
@@ -46,19 +50,50 @@ class EnsureClientSystem
             ]);
             $system = ClientSystem::create([
                 'name' => $name.' / '.$dbName,
-                'client_id' => $client->id,
+                'client_id' => $this->savedId($client),
                 'endpoint' => $endpoint,
                 'db_name' => $dbName,
                 'status' => 'active',
                 'allow_get_info' => false,
             ]);
-            $system->apps()->syncWithoutDetaching([$app->id]);
+            $this->grant($system, $appId);
 
             return [
                 'client_system_id' => (string) $system->uuid,
                 'created' => true,
             ];
         });
+    }
+
+    private function grant(ClientSystem $system, int $appId): void
+    {
+        $systemId = $this->savedId($system);
+
+        DB::table('app_client_system')->insertOrIgnore([
+            'app_id' => $appId,
+            'client_system_id' => $systemId,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    private function savedId(Model $model): int
+    {
+        $id = $model->getKey();
+        if (is_numeric($id) && (int) $id > 0) {
+            return (int) $id;
+        }
+
+        $uuid = $model->getAttribute('uuid');
+        if (is_string($uuid) && $uuid !== '') {
+            $id = $model->newQuery()->where('uuid', $uuid)->value('id');
+        }
+
+        if (!is_numeric($id) || (int) $id < 1) {
+            throw new RuntimeException('Saved record is missing an id.');
+        }
+
+        return (int) $id;
     }
 
     private function find(string $endpoint, string $dbName): ?ClientSystem

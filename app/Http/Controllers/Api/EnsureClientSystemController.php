@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Application\ClientSystem\EnsureClientSystem;
 use App\Http\Controllers\Controller;
+use App\Http\Support\ApiRequestHeaders;
 use App\Models\App;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -24,8 +25,11 @@ class EnsureClientSystemController extends Controller
             'db_name' => ['required', 'string', 'max:255'],
         ]);
 
-        $app = $request->get('app');
-        if (!$app instanceof App) {
+        $appUuid = ApiRequestHeaders::uuid(ApiRequestHeaders::value($request, 'X-App-Id'));
+        $app = $appUuid === null
+            ? null
+            : App::query()->where('uuid', $appUuid)->where('status', 'active')->first();
+        if (!$app instanceof App || !is_numeric($app->getKey()) || (int) $app->getKey() < 1) {
             return response()->json([
                 'success' => false,
                 'message' => 'Invalid app.',
