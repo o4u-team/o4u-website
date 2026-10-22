@@ -6,6 +6,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
 use Kreait\Firebase\Contract\Messaging;
+use Kreait\Firebase\Messaging\AndroidConfig;
 use Kreait\Firebase\Messaging\CloudMessage;
 use Kreait\Firebase\Messaging\Notification;
 
@@ -40,6 +41,12 @@ class FCMSendMultiNotiJob implements ShouldQueue
             $message = CloudMessage::new()
                 ->withNotification(Notification::create($this->title, $this->description))
                 ->withData($this->data);
+
+            if (($this->data['app_id'] ?? null) === 'approval') {
+                $message = $message->withAndroidConfig(
+                    AndroidConfig::new()->withHighMessagePriority()
+                );
+            }
 
             $report = $messaging->sendMulticast($message, $this->tokens);
 
