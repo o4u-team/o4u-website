@@ -32,6 +32,8 @@ Route::middleware('auth')->group(function () {
     
     // Client Systems CRUD
     Route::resource('client-systems', ClientSystemController::class);
+    Route::get('client-systems/{client_system}/app-info', [ClientSystemController::class, 'appInfo'])
+        ->name('client-systems.app-info');
     Route::get('client-systems/{client_system}/apps', [ClientSystemController::class, 'getApps'])
         ->name('client-systems.apps');
     Route::post('client-systems/{client_system}/sync-apps', [ClientSystemController::class, 'syncApps'])

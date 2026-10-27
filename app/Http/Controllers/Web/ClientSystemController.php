@@ -175,15 +175,34 @@ class ClientSystemController extends Controller
     /**
      * Get apps with their assignment status for a client system.
      */
+    public function appInfo(ClientSystem $clientSystem): Response
+    {
+        return Inertia::render('ClientSystems/AppInfo', [
+            'clientSystem' => $clientSystem->only(['id', 'name', 'uuid', 'endpoint', 'db_name']),
+            'apps' => $this->appsFor($clientSystem),
+        ]);
+    }
+
     public function getApps(ClientSystem $clientSystem): JsonResponse
     {
-        $apps = App::where('status', 'active')
+        return response()->json([
+            'apps' => $this->appsFor($clientSystem),
+            'clientSystem' => $clientSystem->only(['id', 'name']),
+        ]);
+    }
+
+    private function appsFor(ClientSystem $clientSystem): \Illuminate\Support\Collection
+    {
+        $apps = App::where(function ($query) use ($clientSystem) {
+                $query->where('status', 'active')
+                    ->orWhereHas('clientSystems', fn ($systems) => $systems->where('client_systems.id', $clientSystem->id));
+            })
             ->orderBy('name')
             ->get(array_merge(['id', 'name', 'uuid'], App::CLIENT_SETTINGS));
 
         $assignedApps = $clientSystem->apps()->get()->keyBy('id');
 
-        $appsWithStatus = $apps->map(function ($app) use ($assignedApps) {
+        return $apps->map(function ($app) use ($assignedApps) {
             $settings = [];
             foreach (App::CLIENT_SETTINGS as $field) {
                 $settings[$field] = $assignedApps->get($app->id)?->pivot?->getAttribute($field);
@@ -199,13 +218,6 @@ class ClientSystemController extends Controller
             ];
         });
 
-        return response()->json([
-            'apps' => $appsWithStatus,
-            'clientSystem' => [
-                'id' => $clientSystem->id,
-                'name' => $clientSystem->name,
-            ],
-        ]);
     }
 
     /**
@@ -218,7 +230,7 @@ class ClientSystemController extends Controller
             'app_ids.*' => 'integer|distinct|exists:apps,id',
             'app_settings' => 'array',
             'app_settings.*' => 'array:'.implode(',', App::CLIENT_SETTINGS),
-            'app_settings.*.webapp_url' => 'nullable|string|max:500|url:http,https',
+            'app_settings.*.webapp_url' => 'nullable|string|max:255|url:http,https',
             'app_settings.*.android_min_version' => ['nullable', 'string', 'max:255', 'regex:/^\d+\.\d+\.\d+$/'],
             'app_settings.*.android_current_version' => ['nullable', 'string', 'max:255', 'regex:/^\d+\.\d+\.\d+$/'],
             'app_settings.*.ios_min_version' => ['nullable', 'string', 'max:255', 'regex:/^\d+\.\d+\.\d+$/'],

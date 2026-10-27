@@ -111,10 +111,10 @@
                         size="small"
                         variant="text"
                         color="primary"
-                        @click="openAppsDialog(item)"
+                        @click="router.visit(`/client-systems/${item.id}/app-info`)"
                     >
                         <v-icon>mdi-apps</v-icon>
-                        <v-tooltip activator="parent" location="top">Phân quyền App</v-tooltip>
+                        <v-tooltip activator="parent" location="top">Cấu hình App Info</v-tooltip>
                     </v-btn>
                     <v-btn
                         icon
@@ -170,68 +170,6 @@
         </v-card>
     </v-dialog>
 
-    <!-- Apps Permission Dialog -->
-    <v-dialog v-model="appsDialog" max-width="500">
-        <v-card>
-            <v-card-title class="d-flex align-center">
-                <v-icon class="mr-2">mdi-apps</v-icon>
-                Phân quyền App
-            </v-card-title>
-            <v-card-subtitle>
-                {{ selectedSystemForApps?.name }}
-            </v-card-subtitle>
-            <v-divider></v-divider>
-            <v-card-text>
-                <div v-if="appsLoading" class="d-flex justify-center py-4">
-                    <v-progress-circular indeterminate color="primary"></v-progress-circular>
-                </div>
-                <div v-else-if="appsList.length > 0">
-                    <div v-for="app in appsList" :key="app.id">
-                        <v-checkbox
-                            v-model="selectedAppIds"
-                            :value="app.id"
-                            :label="app.name"
-                            hide-details
-                            density="compact"
-                            class="mb-1"
-                        />
-                        <div v-if="selectedAppIds.includes(app.id)" class="ml-8 mb-4">
-                            <v-text-field
-                                v-for="field in appSettingFields"
-                                :key="field.key"
-                                v-model="app.settings[field.key]"
-                                :label="field.label"
-                                :placeholder="app.defaults[field.key] || field.placeholder"
-                                hint="Để trống để sử dụng giá trị mặc định của app."
-                                persistent-hint
-                                :error-messages="page.props.errors?.[`app_settings.${app.id}.${field.key}`]"
-                                variant="outlined"
-                                density="compact"
-                                class="mb-2"
-                            />
-                        </div>
-                    </div>
-                </div>
-                <v-alert v-else type="info" variant="tonal">
-                    Không có app nào đang hoạt động.
-                </v-alert>
-            </v-card-text>
-            <v-divider></v-divider>
-            <v-card-actions>
-                <v-spacer></v-spacer>
-                <v-btn variant="text" @click="appsDialog = false">Hủy</v-btn>
-                <v-btn 
-                    color="primary" 
-                    variant="flat" 
-                    @click="saveApps"
-                    :loading="savingApps"
-                    :disabled="appsLoading"
-                >
-                    Lưu
-                </v-btn>
-            </v-card-actions>
-        </v-card>
-    </v-dialog>
 </template>
 
 <script setup lang="ts">
@@ -254,25 +192,6 @@ interface ClientSystem {
     db_name: string;
     status: 'active' | 'inactive' | 'expired';
     created_at: string;
-}
-
-const appSettingFields = [
-    { key: 'webapp_url', label: 'WebApp URL riêng', placeholder: 'https://...' },
-    { key: 'android_min_version', label: 'Android phiên bản tối thiểu', placeholder: '1.0.0' },
-    { key: 'android_current_version', label: 'Android phiên bản hiện tại', placeholder: '1.0.0' },
-    { key: 'android_store_url', label: 'Android Store URL', placeholder: 'https://play.google.com/...' },
-    { key: 'ios_min_version', label: 'iOS phiên bản tối thiểu', placeholder: '1.0.0' },
-    { key: 'ios_current_version', label: 'iOS phiên bản hiện tại', placeholder: '1.0.0' },
-    { key: 'apple_store_url', label: 'iOS App Store URL', placeholder: 'https://apps.apple.com/...' },
-];
-
-interface AppItem {
-    id: number;
-    name: string;
-    uuid: string;
-    assigned: boolean;
-    settings: Record<string, string | null>;
-    defaults: Record<string, string | null>;
 }
 
 interface Props {
@@ -323,14 +242,6 @@ const currentPage = ref(props.clientSystems.current_page);
 const loading = ref(false);
 const deleteDialog = ref(false);
 const selectedSystem = ref<ClientSystem | null>(null);
-
-// Apps permission dialog
-const appsDialog = ref(false);
-const appsLoading = ref(false);
-const appsList = ref<AppItem[]>([]);
-const selectedSystemForApps = ref<ClientSystem | null>(null);
-const selectedAppIds = ref<number[]>([]);
-const savingApps = ref(false);
 
 const headers = [
     { title: 'ID', key: 'id', sortable: false },
@@ -433,56 +344,4 @@ const deleteSystem = () => {
     });
 };
 
-const openAppsDialog = async (system: ClientSystem) => {
-    selectedSystemForApps.value = system;
-    appsDialog.value = true;
-    appsLoading.value = true;
-    appsList.value = [];
-    selectedAppIds.value = [];
-
-    try {
-        const response = await fetch(`/client-systems/${system.id}/apps`, {
-            credentials: 'same-origin',
-            headers: {
-                'Accept': 'application/json',
-            },
-        });
-        const data = await response.json();
-        appsList.value = (data.apps || []).map((app: Record<string, any>) => ({
-            ...app,
-            settings: Object.fromEntries(appSettingFields.map(field => [field.key, app[field.key] ?? null])),
-            defaults: Object.fromEntries(appSettingFields.map(field => [field.key, app[`default_${field.key}`] ?? null])),
-        }));
-        // Set initially selected apps
-        selectedAppIds.value = appsList.value
-            .filter(app => app.assigned)
-            .map(app => app.id);
-    } catch (error) {
-        console.error('Failed to load apps:', error);
-    } finally {
-        appsLoading.value = false;
-    }
-};
-
-const saveApps = () => {
-    if (!selectedSystemForApps.value) return;
-
-    savingApps.value = true;
-
-    router.post(`/client-systems/${selectedSystemForApps.value.id}/sync-apps`, {
-        app_ids: selectedAppIds.value,
-        app_settings: Object.fromEntries(appsList.value
-            .filter(app => selectedAppIds.value.includes(app.id))
-            .map(app => [app.id, app.settings])),
-    }, {
-        preserveState: true,
-        preserveScroll: true,
-        onSuccess: () => {
-            appsDialog.value = false;
-        },
-        onFinish: () => {
-            savingApps.value = false;
-        },
-    });
-};
 </script>
