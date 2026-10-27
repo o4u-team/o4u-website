@@ -18,7 +18,7 @@ class EnsureClientSystem
      * Find the client system for this Odoo endpoint and database, or create it
      * and grant the calling app.
      *
-     * @return array{client_system_id: string, created: bool}
+     * @return array<string, mixed>
      */
     public function handle(App $app, string $endpoint, string $dbName): array
     {
@@ -27,7 +27,7 @@ class EnsureClientSystem
 
         $appId = $this->savedId($app);
 
-        return DB::transaction(function () use ($appId, $endpoint, $dbName): array {
+        return DB::transaction(function () use ($app, $appId, $endpoint, $dbName): array {
             $existing = $this->find($endpoint, $dbName);
             if ($existing instanceof ClientSystem) {
                 if ($existing->status !== 'active') {
@@ -39,6 +39,7 @@ class EnsureClientSystem
                 return [
                     'client_system_id' => (string) $existing->uuid,
                     'created' => false,
+                    ...$existing->appSettingsFor($app),
                 ];
             }
 
@@ -61,6 +62,7 @@ class EnsureClientSystem
             return [
                 'client_system_id' => (string) $system->uuid,
                 'created' => true,
+                ...$system->appSettingsFor($app),
             ];
         });
     }

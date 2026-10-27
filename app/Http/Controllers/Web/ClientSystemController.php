@@ -9,6 +9,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 use App\Http\Controllers\Controller;
@@ -178,16 +179,23 @@ class ClientSystemController extends Controller
     {
         $apps = App::where('status', 'active')
             ->orderBy('name')
-            ->get(['id', 'name', 'uuid']);
+            ->get(array_merge(['id', 'name', 'uuid'], App::CLIENT_SETTINGS));
 
-        $assignedAppIds = $clientSystem->apps()->pluck('apps.id')->toArray();
+        $assignedApps = $clientSystem->apps()->get()->keyBy('id');
 
-        $appsWithStatus = $apps->map(function ($app) use ($assignedAppIds) {
+        $appsWithStatus = $apps->map(function ($app) use ($assignedApps) {
+            $settings = [];
+            foreach (App::CLIENT_SETTINGS as $field) {
+                $settings[$field] = $assignedApps->get($app->id)?->pivot?->getAttribute($field);
+                $settings['default_'.$field] = $app->getAttribute($field);
+            }
+
             return [
+                ...$settings,
                 'id' => $app->id,
                 'name' => $app->name,
                 'uuid' => $app->uuid,
-                'assigned' => in_array($app->id, $assignedAppIds),
+                'assigned' => $assignedApps->has($app->id),
             ];
         });
 
@@ -207,13 +215,54 @@ class ClientSystemController extends Controller
     {
         $validated = $request->validate([
             'app_ids' => 'array',
-            'app_ids.*' => 'exists:apps,id',
+            'app_ids.*' => 'integer|distinct|exists:apps,id',
+            'app_settings' => 'array',
+            'app_settings.*' => 'array:'.implode(',', App::CLIENT_SETTINGS),
+            'app_settings.*.webapp_url' => 'nullable|string|max:500|url:http,https',
+            'app_settings.*.android_min_version' => ['nullable', 'string', 'max:255', 'regex:/^\d+\.\d+\.\d+$/'],
+            'app_settings.*.android_current_version' => ['nullable', 'string', 'max:255', 'regex:/^\d+\.\d+\.\d+$/'],
+            'app_settings.*.ios_min_version' => ['nullable', 'string', 'max:255', 'regex:/^\d+\.\d+\.\d+$/'],
+            'app_settings.*.ios_current_version' => ['nullable', 'string', 'max:255', 'regex:/^\d+\.\d+\.\d+$/'],
+            'app_settings.*.android_store_url' => 'nullable|string|max:500|url:http,https',
+            'app_settings.*.apple_store_url' => 'nullable|string|max:500|url:http,https',
+            'webapp_urls' => 'array',
+            'webapp_urls.*' => 'nullable|string|max:255|url:http,https',
         ]);
 
         $appIds = $validated['app_ids'] ?? [];
 
         // Sync apps (this will add new and remove old associations)
-        $clientSystem->apps()->sync($appIds);
+        // Omitted URLs preserve existing configuration for older callers.
+        $assignments = [];
+        foreach ($appIds as $appId) {
+            $assignments[$appId] = array_key_exists($appId, $validated['webapp_urls'] ?? [])
+                ? ['webapp_url' => $validated['webapp_urls'][$appId]]
+                : [];
+        }
+        foreach ($appIds as $appId) {
+            $assignments[$appId] = array_merge($assignments[$appId], $validated['app_settings'][$appId] ?? []);
+        }
+        $apps = App::whereIn('id', $appIds)->get();
+        $existing = $clientSystem->apps()->get()->keyBy('id');
+        foreach ($apps as $app) {
+            foreach (['android', 'ios'] as $platform) {
+                $versions = [];
+                foreach (['min_version', 'current_version'] as $suffix) {
+                    $field = $platform.'_'.$suffix;
+                    $value = array_key_exists($field, $assignments[$app->id])
+                        ? $assignments[$app->id][$field]
+                        : $existing->get($app->id)?->pivot?->getAttribute($field);
+                    $versions[$suffix] = is_string($value) && trim($value) !== '' ? $value : $app->getAttribute($field);
+                }
+                if ($versions['min_version'] && $versions['current_version']
+                    && App::compareVersions($versions['min_version'], $versions['current_version']) > 0) {
+                    throw ValidationException::withMessages([
+                        "app_settings.{$app->id}.{$platform}_min_version" => 'Phiên bản tối thiểu phải nhỏ hơn hoặc bằng phiên bản hiện tại.',
+                    ]);
+                }
+            }
+        }
+        $clientSystem->apps()->sync($assignments);
 
         return redirect()->back()
             ->with('success', 'Cập nhật phân quyền app thành công.');

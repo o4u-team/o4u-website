@@ -37,6 +37,7 @@ class AppInfoController extends Controller
                 'endpoint' => $clientSystem->endpoint,
                 'webapp_endpoint' => $clientSystem->webapp_endpoint,
                 'db_name' => $clientSystem->db_name,
+                ...$clientSystem->appSettingsFor($request->get('app')),
             ],
         ]);
     }

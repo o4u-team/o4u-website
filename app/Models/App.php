@@ -13,6 +13,16 @@ class App extends Model
 {
     use HasFactory;
 
+    public const CLIENT_SETTINGS = [
+        'webapp_url',
+        'android_min_version',
+        'android_current_version',
+        'ios_min_version',
+        'ios_current_version',
+        'android_store_url',
+        'apple_store_url',
+    ];
+
     protected $fillable = [
         'name',
         'uuid',
@@ -53,6 +63,7 @@ class App extends Model
     public function clientSystems(): BelongsToMany
     {
         return $this->belongsToMany(ClientSystem::class, 'app_client_system')
+            ->withPivot(self::CLIENT_SETTINGS)
             ->withTimestamps();
     }
 

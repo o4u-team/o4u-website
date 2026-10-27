@@ -59,7 +59,26 @@ class ClientSystem extends Model
     public function apps(): BelongsToMany
     {
         return $this->belongsToMany(App::class, 'app_client_system')
+            ->withPivot(App::CLIENT_SETTINGS)
             ->withTimestamps();
+    }
+
+    public function webappUrlFor(App $app): ?string
+    {
+        return $this->appSettingsFor($app)['webapp_url'];
+    }
+
+    /** @return array<string, string|null> */
+    public function appSettingsFor(App $app): array
+    {
+        $pivot = $this->apps()->where('apps.id', $app->getKey())->first()?->pivot;
+        $settings = [];
+        foreach (App::CLIENT_SETTINGS as $field) {
+            $value = $pivot?->getAttribute($field);
+            $settings[$field] = is_string($value) && trim($value) !== '' ? $value : $app->getAttribute($field);
+        }
+
+        return $settings;
     }
 
     /**

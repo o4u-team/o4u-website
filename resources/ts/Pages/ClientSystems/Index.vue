@@ -186,23 +186,31 @@
                     <v-progress-circular indeterminate color="primary"></v-progress-circular>
                 </div>
                 <div v-else-if="appsList.length > 0">
-                    <v-checkbox
-                        v-for="app in appsList"
-                        :key="app.id"
-                        v-model="selectedAppIds"
-                        :value="app.id"
-                        :label="app.name"
-                        hide-details
-                        density="compact"
-                        class="mb-1"
-                    >
-                        <template v-slot:label>
-                            <div>
-                                <span>{{ app.name }}</span>
-                                <code class="text-caption ml-2 text-medium-emphasis">{{ app.uuid?.substring(0, 8) }}...</code>
-                            </div>
-                        </template>
-                    </v-checkbox>
+                    <div v-for="app in appsList" :key="app.id">
+                        <v-checkbox
+                            v-model="selectedAppIds"
+                            :value="app.id"
+                            :label="app.name"
+                            hide-details
+                            density="compact"
+                            class="mb-1"
+                        />
+                        <div v-if="selectedAppIds.includes(app.id)" class="ml-8 mb-4">
+                            <v-text-field
+                                v-for="field in appSettingFields"
+                                :key="field.key"
+                                v-model="app.settings[field.key]"
+                                :label="field.label"
+                                :placeholder="app.defaults[field.key] || field.placeholder"
+                                hint="Để trống để sử dụng giá trị mặc định của app."
+                                persistent-hint
+                                :error-messages="page.props.errors?.[`app_settings.${app.id}.${field.key}`]"
+                                variant="outlined"
+                                density="compact"
+                                class="mb-2"
+                            />
+                        </div>
+                    </div>
                 </div>
                 <v-alert v-else type="info" variant="tonal">
                     Không có app nào đang hoạt động.
@@ -248,11 +256,23 @@ interface ClientSystem {
     created_at: string;
 }
 
+const appSettingFields = [
+    { key: 'webapp_url', label: 'WebApp URL riêng', placeholder: 'https://...' },
+    { key: 'android_min_version', label: 'Android phiên bản tối thiểu', placeholder: '1.0.0' },
+    { key: 'android_current_version', label: 'Android phiên bản hiện tại', placeholder: '1.0.0' },
+    { key: 'android_store_url', label: 'Android Store URL', placeholder: 'https://play.google.com/...' },
+    { key: 'ios_min_version', label: 'iOS phiên bản tối thiểu', placeholder: '1.0.0' },
+    { key: 'ios_current_version', label: 'iOS phiên bản hiện tại', placeholder: '1.0.0' },
+    { key: 'apple_store_url', label: 'iOS App Store URL', placeholder: 'https://apps.apple.com/...' },
+];
+
 interface AppItem {
     id: number;
     name: string;
     uuid: string;
     assigned: boolean;
+    settings: Record<string, string | null>;
+    defaults: Record<string, string | null>;
 }
 
 interface Props {
@@ -428,7 +448,11 @@ const openAppsDialog = async (system: ClientSystem) => {
             },
         });
         const data = await response.json();
-        appsList.value = data.apps || [];
+        appsList.value = (data.apps || []).map((app: Record<string, any>) => ({
+            ...app,
+            settings: Object.fromEntries(appSettingFields.map(field => [field.key, app[field.key] ?? null])),
+            defaults: Object.fromEntries(appSettingFields.map(field => [field.key, app[`default_${field.key}`] ?? null])),
+        }));
         // Set initially selected apps
         selectedAppIds.value = appsList.value
             .filter(app => app.assigned)
@@ -447,6 +471,9 @@ const saveApps = () => {
 
     router.post(`/client-systems/${selectedSystemForApps.value.id}/sync-apps`, {
         app_ids: selectedAppIds.value,
+        app_settings: Object.fromEntries(appsList.value
+            .filter(app => selectedAppIds.value.includes(app.id))
+            .map(app => [app.id, app.settings])),
     }, {
         preserveState: true,
         preserveScroll: true,

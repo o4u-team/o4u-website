@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Support\ApiRequestHeaders;
 use App\Models\App;
+use App\Http\Middleware\ValidateClientSystemAppMiddleware;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -20,6 +21,15 @@ class AppVersionController extends Controller
      */
     public function show(Request $request): JsonResponse
     {
+        if (ApiRequestHeaders::value($request, 'X-Client-System-Id') !== null) {
+            return app(ValidateClientSystemAppMiddleware::class)->handle($request, fn (Request $validated) => $this->respond($validated));
+        }
+
+        return $this->respond($request);
+    }
+
+    private function respond(Request $request): JsonResponse
+    {
         /** @var App|null $app */
         $app = $request->get('app');
 
@@ -28,6 +38,11 @@ class AppVersionController extends Controller
                 'success' => false,
                 'message' => 'App not found in request.',
             ], 400);
+        }
+
+        if ($system = $request->get('client_system')) {
+            $app = clone $app;
+            $app->fill($system->appSettingsFor($app));
         }
 
         $platform = strtolower((string) (ApiRequestHeaders::value($request, 'X-Platform') ?? $request->query('platform', '')));
