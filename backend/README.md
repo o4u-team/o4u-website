@@ -1,6 +1,6 @@
 # O4U Backend
 
-Rust workspace riêng, tham khảo cấu trúc `nvnhan0810.com/backend`. Chạy trực tiếp trên PostgreSQL O4U hiện tại. Không có migration, seeder hay DDL trong startup.
+Rust workspace riêng, tham khảo cấu trúc `nvnhan0810.com/backend`. Chạy trực tiếp trên PostgreSQL O4U hiện tại. Không có migration, seeder hay DDL trong startup. Database mới dùng [database/init.sql](database/init.sql); xem [hướng dẫn khởi tạo](database/README.md). Snapshot này không cần source hoặc migration Laravel cũ.
 
 - `crates/domain`: quy tắc phiên bản, cấu hình app, resource, đăng ký ERP và lỗi nghiệp vụ.
 - `crates/application`: command handlers, query/read port, write port và registration gateway.
@@ -45,7 +45,7 @@ cargo clippy --workspace --all-targets -- -D warnings
 cargo test --workspace
 ```
 
-Integration test được đánh dấu `ignored` để `cargo test` thông thường không tự đụng DB. File `tests/fixtures/legacy-schema.sql` là schema-only export của DB hiện tại, không chứa dữ liệu. Chỉ nạp fixture vào PostgreSQL test riêng:
+Integration test được đánh dấu `ignored` để `cargo test` thông thường không tự đụng DB. Script test dùng `database/init.sql`, là snapshot cấu trúc hiện tại, không chứa dữ liệu. `tests/fixtures/legacy-schema.sql` giữ snapshot lịch sử của lần chuyển source ban đầu. Chỉ nạp schema vào PostgreSQL test riêng:
 
 ```sh
 /usr/lib/postgresql/18/bin/initdb -D /tmp/o4u-test-postgres -A trust --no-locale -E UTF8

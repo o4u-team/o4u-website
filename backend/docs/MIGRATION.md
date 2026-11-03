@@ -45,7 +45,7 @@ Schema thật cho phép nhiều cột nullable hơn file Laravel migration. Fron
 
 Session mới dùng cookie `o4u_session`, payload riêng và ID prefix `o4u:` trong bảng sessions. Không tiếp tục cookie Laravel cũ; người dùng đăng nhập lại sau khi chuyển hệ thống. Rate limit đăng ký dùng key SHA256 prefix `o4u-rust-rate:` trong bảng cache cũ, hỗ trợ nhiều process và restart. Giới hạn mới tính mỗi lần thử đăng ký theo email, thay vì chỉ đếm đăng ký thành công như controller cũ.
 
-Runtime không chạy migration, không import fixture, không đổi schema. `export-schema.py` chỉ dùng `pg_dump --schema-only --no-owner --no-privileges` để tạo fixture kiểm thử. Không chứa dữ liệu khách hàng hoặc credentials trong fixture.
+Runtime không chạy migration, không import fixture, không đổi schema. `scripts/export-schema.py` đọc cấu hình từ `backend/.env` và xuất schema hiện tại vào `database/init.sql`, không phụ thuộc source Laravel cũ. File này dùng khởi tạo database trống và kiểm thử tích hợp; hướng dẫn tại `database/README.md`. Không chứa dữ liệu khách hàng. `tests/fixtures/legacy-schema.sql` là snapshot lịch sử của lần chuyển source ban đầu.
 
 ## Xác minh
 
