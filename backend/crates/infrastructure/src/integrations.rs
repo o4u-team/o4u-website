@@ -108,10 +108,7 @@ impl Integrations {
     }
     pub async fn firebase(&self, data: &Value) -> Result<()> {
         let c = &self.config;
-        let bytes = tokio::fs::read(&c.firebase_credentials)
-            .await
-            .map_err(|_| Error::Unavailable("FIREBASE_CREDENTIALS cannot be read".into()))?;
-        let account: Value = serde_json::from_slice(&bytes).map_err(|_| Error::Internal)?;
+        let account = firebase_account(&c.firebase_credentials).await?;
         let now = chrono::Utc::now().timestamp();
         let claims = json!({"iss":account["client_email"],"scope":"https://www.googleapis.com/auth/firebase.messaging","aud":"https://oauth2.googleapis.com/token","iat":now,"exp":now+3600});
         let assertion = encode(
@@ -190,6 +187,38 @@ impl Integrations {
         Ok(())
     }
 }
+async fn firebase_account(credentials: &str) -> Result<Value> {
+    let credentials = credentials.trim();
+    if credentials.is_empty() {
+        return Err(Error::Unavailable(
+            "FIREBASE_CREDENTIALS is not configured".into(),
+        ));
+    }
+    let bytes = if credentials.starts_with('{') {
+        credentials.as_bytes().to_vec()
+    } else {
+        tokio::fs::read(credentials)
+            .await
+            .map_err(|_| Error::Unavailable("FIREBASE_CREDENTIALS cannot be read".into()))?
+    };
+    let account: Value = serde_json::from_slice(&bytes).map_err(|_| {
+        Error::Unavailable("FIREBASE_CREDENTIALS must contain valid service-account JSON".into())
+    })?;
+    if ["project_id", "client_email", "private_key"]
+        .iter()
+        .any(|field| {
+            account[*field]
+                .as_str()
+                .is_none_or(|value| value.trim().is_empty())
+        })
+    {
+        return Err(Error::Unavailable(
+            "FIREBASE_CREDENTIALS requires project_id, client_email and private_key".into(),
+        ));
+    }
+    Ok(account)
+}
+
 fn upstream(error: reqwest::Error) -> Error {
     tracing::warn!(error=%error,"Upstream request failed");
     Error::Unavailable("Upstream service is unavailable".into())
@@ -276,4 +305,49 @@ impl RegistrationGateway for Integrations {
 }
 pub fn google_authorize_url() -> reqwest::Url {
     reqwest::Url::parse("https://accounts.google.com/o/oauth2/v2/auth").expect("Static Google URL")
+}
+
+#[cfg(test)]
+mod firebase_tests {
+    use super::firebase_account;
+    use serde_json::json;
+
+    fn account() -> serde_json::Value {
+        json!({"project_id":"test", "client_email":"test@example.test", "private_key":"-----BEGIN PRIVATE KEY-----\ntest\n-----END PRIVATE KEY-----\n"})
+    }
+
+    #[tokio::test]
+    async fn reads_inline_json_and_preserves_pem_newlines() {
+        let expected = account();
+        let value = firebase_account(&format!("  {}  ", expected))
+            .await
+            .unwrap();
+        assert_eq!(value, expected);
+        assert!(value["private_key"].as_str().unwrap().contains('\n'));
+    }
+
+    #[tokio::test]
+    async fn reads_service_account_file() {
+        let path =
+            std::env::temp_dir().join(format!("o4u-firebase-test-{}.json", uuid::Uuid::new_v4()));
+        tokio::fs::write(&path, account().to_string())
+            .await
+            .unwrap();
+        let result = firebase_account(path.to_str().unwrap()).await;
+        tokio::fs::remove_file(&path).await.unwrap();
+        assert_eq!(result.unwrap(), account());
+    }
+
+    #[tokio::test]
+    async fn rejects_invalid_credentials_without_exposing_secrets() {
+        for credentials in [
+            "",
+            "{secret-invalid-json",
+            r#"{"private_key":"secret-value"}"#,
+        ] {
+            let error = firebase_account(credentials).await.unwrap_err().to_string();
+            assert!(error.contains("FIREBASE_CREDENTIALS"));
+            assert!(!error.contains("secret"));
+        }
+    }
 }

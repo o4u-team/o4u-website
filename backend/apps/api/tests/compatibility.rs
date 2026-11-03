@@ -19,6 +19,7 @@ fn config(url: String) -> Config {
         frontend_url: "http://localhost:5173".into(),
         session_secret: "only-for-tests-a-long-session-secret-0123456789".into(),
         secure_cookie: false,
+        session_cookie_domain: None,
         google_client_id: "test-client".into(),
         google_client_secret: "".into(),
         google_redirect_uri: "http://localhost:5173/auth/callback".into(),

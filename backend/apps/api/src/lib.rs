@@ -133,14 +133,48 @@ fn header<'a>(headers: &'a HeaderMap, name: &str) -> Option<&'a str> {
         .filter(|s| !s.is_empty())
 }
 fn set_cookie(s: &AppState, name: &str, value: &str, age: i64) -> String {
+    cookie_value(s.config.secure_cookie, None, name, value, age)
+}
+fn cookie_value(secure: bool, domain: Option<&str>, name: &str, value: &str, age: i64) -> String {
     format!(
-        "{name}={value}; Path=/; HttpOnly; SameSite=Lax; Max-Age={age}{}",
-        if s.config.secure_cookie {
-            "; Secure"
-        } else {
-            ""
-        }
+        "{name}={value}; Path=/; HttpOnly; SameSite=Lax; Max-Age={age}{}{}",
+        if secure { "; Secure" } else { "" },
+        domain
+            .map(|domain| format!("; Domain={domain}"))
+            .unwrap_or_default()
     )
+}
+fn session_cookies(s: &AppState, value: &str, age: i64) -> ApiResult<HeaderMap> {
+    session_cookie_headers(
+        s.config.secure_cookie,
+        s.config.session_cookie_domain.as_deref(),
+        value,
+        age,
+    )
+}
+fn session_cookie_headers(
+    secure: bool,
+    domain: Option<&str>,
+    value: &str,
+    age: i64,
+) -> ApiResult<HeaderMap> {
+    let mut headers = HeaderMap::new();
+    // Remove the previous host-only session so it cannot shadow the shared cookie.
+    if domain.is_some() {
+        headers.append(
+            "set-cookie",
+            cookie_value(secure, None, "o4u_session", "", 0)
+                .parse()
+                .map_err(|_| Error::Internal)?,
+        );
+    }
+    headers.append(
+        "set-cookie",
+        cookie_value(secure, domain, "o4u_session", value, age)
+            .parse()
+            .map_err(|_| Error::Internal)?,
+    );
+    Ok(headers)
 }
 async fn current_user(s: &AppState, h: &HeaderMap) -> o4u_domain::Result<Value> {
     let token = cookie(h, "o4u_session").ok_or(Error::Unauthorized("Login required".into()))?;
@@ -185,11 +219,7 @@ async fn logout(State(s): State<AppState>, h: HeaderMap) -> ApiResult<Response> 
             .await
             .map_err(db_error)?;
     }
-    Ok((
-        [("set-cookie", set_cookie(&s, "o4u_session", "", 0))],
-        Json(json!({"success":true})),
-    )
-        .into_response())
+    Ok((session_cookies(&s, "", 0)?, Json(json!({"success":true}))).into_response())
 }
 async fn ready(State(s): State<AppState>) -> ApiResult<Json<Value>> {
     sqlx::query("SELECT 1")
@@ -294,7 +324,7 @@ async fn google_callback(
     }.await;
     let mut response = match result {
         Ok(token) => (
-            [("set-cookie", set_cookie(&s, "o4u_session", &token, 28800))],
+            session_cookies(&s, &token, 28800)?,
             Redirect::to(&format!("{}/dashboard", s.config.frontend_url)),
         )
             .into_response(),
@@ -615,4 +645,54 @@ async fn legacy_log(
     redact_diagnostic(&mut data);
     tracing::info!(path=%uri.path(),payload=%data,"Legacy mobile diagnostic received");
     StatusCode::OK
+}
+
+#[cfg(test)]
+mod cookie_tests {
+    use super::{cookie_value, session_cookie_headers};
+
+    #[test]
+    fn shared_session_replaces_host_cookie_and_keeps_security_attributes() {
+        let headers = session_cookie_headers(true, Some("example.com"), "token", 28800)
+            .unwrap_or_else(|_| panic!("Invalid cookie headers"));
+        let cookies: Vec<_> = headers
+            .get_all("set-cookie")
+            .iter()
+            .map(|h| h.to_str().unwrap())
+            .collect();
+        assert_eq!(cookies.len(), 2);
+        assert!(cookies[0].contains("o4u_session=;"));
+        assert!(cookies[0].contains("Max-Age=0"));
+        assert!(!cookies[0].contains("Domain="));
+        assert_eq!(
+            cookies[1],
+            "o4u_session=token; Path=/; HttpOnly; SameSite=Lax; Max-Age=28800; Secure; Domain=example.com"
+        );
+    }
+
+    #[test]
+    fn logout_clears_shared_and_legacy_sessions() {
+        let headers = session_cookie_headers(true, Some("example.com"), "", 0)
+            .unwrap_or_else(|_| panic!("Invalid cookie headers"));
+        for cookie in headers.get_all("set-cookie") {
+            let cookie = cookie.to_str().unwrap();
+            assert!(cookie.starts_with("o4u_session=;"));
+            assert!(cookie.contains("Max-Age=0"));
+        }
+        assert_eq!(headers.get_all("set-cookie").iter().count(), 2);
+    }
+
+    #[test]
+    fn default_session_and_oauth_cookies_remain_host_only() {
+        let headers = session_cookie_headers(false, None, "token", 28800)
+            .unwrap_or_else(|_| panic!("Invalid cookie headers"));
+        assert_eq!(headers.get_all("set-cookie").iter().count(), 1);
+        let cookie = headers["set-cookie"].to_str().unwrap();
+        assert!(!cookie.contains("Domain="));
+        assert!(!cookie.contains("Secure"));
+        assert_eq!(
+            cookie_value(true, None, "o4u_oauth", "state", 600),
+            "o4u_oauth=state; Path=/; HttpOnly; SameSite=Lax; Max-Age=600; Secure"
+        );
+    }
 }

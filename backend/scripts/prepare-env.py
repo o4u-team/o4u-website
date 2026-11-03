@@ -31,7 +31,7 @@ def main():
             'TELEGRAM_BOT_TOKEN', 'TELEGRAM_CHAT_ID', 'TELEGRAM_REGISTRATION_CHAT_ID']
     copied = {key: values[key] for key in keys if values.get(key)}
     credentials = copied.get('FIREBASE_CREDENTIALS')
-    if credentials and not Path(credentials).is_absolute():
+    if credentials and not credentials.lstrip().startswith('{') and not Path(credentials).is_absolute():
         copied['FIREBASE_CREDENTIALS'] = str((backend.parent / credentials).resolve())
     copied.update(SESSION_SECRET=secrets.token_urlsafe(48), FRONTEND_URL='http://localhost:5173',
                   BIND_ADDRESS='127.0.0.1:8088', TURNSTILE_BYPASS='false')

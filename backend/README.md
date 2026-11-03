@@ -25,6 +25,8 @@ API mặc định `127.0.0.1:8088`. Chạy frontend tại `http://localhost:5173
 
 Google login yêu cầu `GOOGLE_REDIRECT_URI` khớp URL callback đã đăng ký với Google. Local: `http://localhost:5173/auth/callback`; production: `https://<domain>/auth/callback`. Chỉ user đã có trong bảng `users` được đăng nhập. Session mới dùng cookie HttpOnly riêng và bảng `sessions` cũ; đăng xuất thu hồi session phía server.
 
+Nếu frontend SSR và backend dùng hai subdomain cùng domain cha, ví dụ `o4u.example.com` và `o4u-backend.example.com`, đặt callback Google ở backend, giữ `FRONTEND_URL` ở frontend và thêm `SESSION_COOKIE_DOMAIN=example.com`. Cookie phiên sẽ được gửi tới cả hai host, để SSR kiểm tra phiên khi về dashboard. OAuth state vẫn dùng cookie chỉ thuộc host backend. Domain cha phải bao gồm cả hai host và các subdomain của domain đó phải đáng tin cậy vì chúng cũng nhận cookie phiên. Để trống biến này khi chạy local hoặc cùng origin. Khởi động lại backend sau khi đổi cấu hình; frontend SSR cần `BACKEND_URL` trỏ đúng backend. Cookie phiên cũ chỉ thuộc host backend sẽ được xóa khi đăng nhập lại hoặc đăng xuất.
+
 ## FCM worker
 
 ```sh
@@ -32,7 +34,7 @@ cd backend
 cargo run -p o4u-api -- worker
 ```
 
-Worker dùng bảng `jobs`/`failed_jobs` cũ, queue riêng `o4u-rust-fcm`; cần service-account JSON tại `FIREBASE_CREDENTIALS`. Không cho Laravel worker xử lý queue này. Có tối đa 3 lần thử; các lỗi tạm thời đợi 60 giây, job hết lượt vào `failed_jobs`. Queue là at-least-once: lỗi một phần của multicast có thể làm gửi lặp khi thử lại. Các token/payload bị Firebase từ chối 400/404 được ghi cảnh báo và bỏ qua; không retry mãi token hỏng.
+Worker dùng bảng `jobs`/`failed_jobs` cũ, queue riêng `o4u-rust-fcm`. `FIREBASE_CREDENTIALS` nhận trực tiếp chuỗi JSON service-account hoặc đường dẫn file JSON. Khi đặt JSON trong `.env`, dùng dấu nháy đơn bao ngoài và giữ escape `\n` trong `private_key` (xem `.env.example`). Không cho Laravel worker xử lý queue này. Có tối đa 3 lần thử; các lỗi tạm thời đợi 60 giây, job hết lượt vào `failed_jobs`. Queue là at-least-once: lỗi một phần của multicast có thể làm gửi lặp khi thử lại. Các token/payload bị Firebase từ chối 400/404 được ghi cảnh báo và bỏ qua; không retry mãi token hỏng.
 
 ## Kiểm tra
 
