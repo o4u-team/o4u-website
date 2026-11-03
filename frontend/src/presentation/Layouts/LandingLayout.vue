@@ -104,10 +104,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue';
-import { useRouter } from 'vue-router';
-import { usePublicContent } from '@/presentation/composables/public-content';
 import { parseProductLinks } from '@/domain/marketing/product-link';
+import { usePublicContent } from '@/presentation/composables/public-content';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 
 const router = useRouter();

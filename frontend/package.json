@@ -7,7 +7,7 @@
         "node": "^22.18.0 || >=24.12.0"
     },
     "scripts": {
-        "dev": "tsx server/index.ts",
+        "dev": "tsx --env-file-if-exists=.env server/index.ts",
         "build": "npm run type-check && vite build && vite build --ssr src/entry-server.ts --outDir dist-ssr",
         "start": "NODE_ENV=production node --env-file-if-exists=.env --import tsx server/index.ts",
         "type-check": "vue-tsc --noEmit && tsc -p tsconfig.node.json --noEmit && tsc -p tsconfig.server.json",

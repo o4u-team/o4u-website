@@ -373,11 +373,10 @@
 </template>
 
 <script setup lang="ts">
-import ZaloIcon from '@/presentation/Components/ZaloIcon.vue';
-import ZaloQrDialog from '@/presentation/Components/ZaloQrDialog.vue';
 import { parseContactInfo } from '@/domain/marketing/contact-info';
 import { parseProductLinks } from '@/domain/marketing/product-link';
-import { useRouter } from 'vue-router';
+import ZaloIcon from '@/presentation/Components/ZaloIcon.vue';
+import ZaloQrDialog from '@/presentation/Components/ZaloQrDialog.vue';
 import { usePublicContent } from '@/presentation/composables/public-content';
 import { computed, ref } from 'vue';
 import { useRouter } from 'vue-router';
