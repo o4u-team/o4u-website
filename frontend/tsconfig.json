@@ -1,0 +1,21 @@
+{
+    "extends": "@vue/tsconfig/tsconfig.dom.json",
+    "include": ["src/**/*.ts", "src/**/*.vue"],
+    "compilerOptions": {
+        "strict": true,
+        "noUncheckedIndexedAccess": true,
+        "noImplicitOverride": true,
+        "noFallthroughCasesInSwitch": true,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
+        "baseUrl": ".",
+        "paths": {
+            "@/*": ["src/*"],
+            "@/Layouts/*": ["src/presentation/Layouts/*"],
+            "@/Components/*": ["src/presentation/Components/*"]
+        },
+        "ignoreDeprecations": "6.0",
+        "types": ["vite/client"],
+        "verbatimModuleSyntax": true
+    }
+}

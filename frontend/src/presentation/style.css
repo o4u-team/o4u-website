@@ -1,0 +1,64 @@
+:root {
+    --o4u-font-family:
+        'Be Vietnam Pro', system-ui, -apple-system, BlinkMacSystemFont,
+        'Segoe UI', sans-serif;
+}
+
+html,
+body {
+    font-family: var(--o4u-font-family);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.v-application {
+    font-family: var(--o4u-font-family) !important;
+}
+
+.v-application .text-h1,
+.v-application .text-h2,
+.v-application .text-h3,
+.v-application .text-h4,
+.v-application .text-h5,
+.v-application .text-h6,
+.v-application .text-subtitle-1,
+.v-application .text-subtitle-2,
+.v-application .text-body-1,
+.v-application .text-body-2,
+.v-application .text-button,
+.v-application .text-caption,
+.v-application .text-overline {
+    font-family: var(--o4u-font-family) !important;
+}
+
+.admin-container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 24px;
+}
+.admin-toolbar {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+.admin-toolbar h1 {
+    flex: 1;
+    min-width: 220px;
+}
+.table-scroll {
+    overflow-x: auto;
+}
+.admin-form {
+    max-width: 760px;
+}
+.error-text {
+    color: #b91c1c;
+    white-space: pre-wrap;
+}
+.empty-state {
+    padding: 32px;
+    text-align: center;
+    color: #64748b;
+}

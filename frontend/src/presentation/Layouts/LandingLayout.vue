@@ -1,0 +1,243 @@
+<template>
+    <v-app :class="{ 'landing-app--erp-saas': isProductLanding }">
+        <v-app-bar
+            :elevation="scrolled ? 4 : 0"
+            :class="[
+                'landing-app-bar',
+                { 'landing-app-bar--scrolled': scrolled },
+            ]"
+            height="72"
+        >
+            <v-container class="d-flex align-center py-0">
+                <div
+                    class="d-flex align-center ga-3 landing-brand"
+                    @click="router.push('/')"
+                >
+                    <v-avatar color="primary" size="44" rounded="lg">
+                        <span
+                            class="landing-logo-mark font-weight-bold text-white"
+                            >O4U</span
+                        >
+                    </v-avatar>
+                    <div>
+                        <div
+                            class="text-subtitle-1 font-weight-bold text-primary"
+                        >
+                            O4U Team
+                        </div>
+                        <div class="text-caption text-medium-emphasis">
+                            Odoo & ERP Solutions
+                        </div>
+                    </div>
+                </div>
+
+                <v-spacer></v-spacer>
+
+                <div class="d-none d-md-flex align-center ga-6 mr-6">
+                    <a
+                        v-for="item in navItems"
+                        :key="item.href"
+                        :href="item.href"
+                        class="landing-nav-link"
+                    >
+                        {{ item.label }}
+                    </a>
+                </div>
+
+                <v-btn
+                    v-if="user"
+                    color="primary"
+                    variant="flat"
+                    class="text-none"
+                    @click="router.push('/dashboard')"
+                >
+                    Dashboard
+                </v-btn>
+                <v-btn
+                    v-else
+                    color="primary"
+                    variant="outlined"
+                    class="text-none"
+                    @click="router.push('/login')"
+                >
+                    Đăng nhập
+                </v-btn>
+            </v-container>
+        </v-app-bar>
+
+        <v-main class="landing-main">
+            <RouterView />
+        </v-main>
+
+        <v-footer class="landing-footer">
+            <v-container>
+                <v-row align="center">
+                    <v-col cols="12" md="6">
+                        <div class="d-flex align-center ga-3 mb-3 mb-md-0">
+                            <v-avatar color="primary" size="40" rounded="lg">
+                                <span
+                                    class="landing-logo-mark landing-logo-mark--sm font-weight-bold text-white"
+                                    >O4U</span
+                                >
+                            </v-avatar>
+                            <div>
+                                <div class="font-weight-bold">O4U Team</div>
+                                <div class="text-caption text-medium-emphasis">
+                                    o4u.nvnhan0810.com
+                                </div>
+                            </div>
+                        </div>
+                    </v-col>
+                    <v-col cols="12" md="6" class="text-md-end">
+                        <div class="text-body-2 text-medium-emphasis">
+                            Tư vấn & triển khai Odoo ERP theo nhu cầu doanh
+                            nghiệp
+                        </div>
+                        <div class="text-caption text-medium-emphasis mt-1">
+                            © {{ currentYear }} O4U Team. All rights reserved.
+                        </div>
+                    </v-col>
+                </v-row>
+            </v-container>
+        </v-footer>
+    </v-app>
+</template>
+
+<script setup lang="ts">
+import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { useRouter } from 'vue-router';
+import { usePublicContent } from '@/presentation/composables/public-content';
+import { parseProductLinks } from '@/domain/marketing/product-link';
+import { useRouter } from 'vue-router';
+
+const router = useRouter();
+const page = usePublicContent();
+const user = computed(() => page.props.auth?.user || null);
+const products = computed(() => parseProductLinks(page.props.products));
+const currentPath = computed(() => page.url.split('?')[0] ?? '/');
+const isProductLanding = computed(() =>
+    products.value.some((product) => product.url === currentPath.value),
+);
+const currentYear = new Date().getFullYear();
+const scrolled = ref(false);
+
+const homeNavItems = [
+    { label: 'Dịch vụ', href: '#services' },
+    { label: 'Quy trình', href: '#process' },
+    { label: 'Sản phẩm', href: '#products' },
+    { label: 'Về chúng tôi', href: '#about' },
+    { label: 'Liên hệ', href: '#contact' },
+];
+
+const productNavItems = [
+    { label: 'Tính năng', href: '#features' },
+    { label: 'Module', href: '#modules' },
+    { label: 'Luồng vận hành', href: '#workflow' },
+    { label: 'Liên hệ', href: '#contact' },
+];
+
+const navItems = computed(() =>
+    isProductLanding.value ? productNavItems : homeNavItems,
+);
+
+const onScroll = () => {
+    scrolled.value = window.scrollY > 24;
+};
+
+onMounted(() => {
+    window.addEventListener('scroll', onScroll, { passive: true });
+});
+
+onUnmounted(() => {
+    window.removeEventListener('scroll', onScroll);
+});
+</script>
+
+<style scoped>
+.landing-app-bar {
+    background: rgba(255, 255, 255, 0.92) !important;
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid transparent;
+    transition:
+        box-shadow 0.2s ease,
+        border-color 0.2s ease;
+}
+
+.landing-app-bar--scrolled {
+    border-bottom-color: rgba(46, 125, 50, 0.12);
+}
+
+.landing-brand {
+    cursor: pointer;
+}
+
+.landing-logo-mark {
+    font-size: 0.8125rem;
+    letter-spacing: -0.02em;
+    line-height: 1;
+}
+
+.landing-logo-mark--sm {
+    font-size: 0.75rem;
+}
+
+.landing-nav-link {
+    color: rgba(0, 0, 0, 0.72);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s ease;
+}
+
+.landing-nav-link:hover {
+    color: rgb(var(--v-theme-primary));
+}
+
+.landing-main {
+    background: #f7fbf7;
+}
+
+.landing-footer {
+    background: #1b5e20 !important;
+    color: white;
+    padding: 32px 0;
+}
+
+.landing-footer .text-medium-emphasis {
+    color: rgba(255, 255, 255, 0.78) !important;
+}
+
+.landing-app--erp-saas .landing-main {
+    background: #f0fdfa;
+}
+
+.landing-app--erp-saas .landing-app-bar--scrolled {
+    border-bottom-color: rgba(13, 148, 136, 0.16);
+}
+
+.landing-app--erp-saas .landing-nav-link:hover {
+    color: #0f766e;
+}
+
+.landing-app--erp-saas .landing-footer {
+    background: #115e59 !important;
+}
+
+.landing-app--erp-saas :deep(.v-avatar.bg-primary),
+.landing-app--erp-saas :deep(.bg-primary) {
+    background-color: #0f766e !important;
+}
+
+.landing-app--erp-saas :deep(.text-primary) {
+    color: #0f766e !important;
+}
+
+.landing-app--erp-saas :deep(.v-btn--variant-outlined) {
+    color: #0f766e;
+    border-color: #0f766e;
+}
+
+.landing-app--erp-saas :deep(.v-btn--variant-flat.bg-primary),
+.landing-app--erp-saas :deep(.v-btn.bg-primary) {
+    background-color: #0f766e !important;
+}
+</style>
